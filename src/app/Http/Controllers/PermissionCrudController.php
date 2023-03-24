@@ -55,7 +55,21 @@ class PermissionCrudController extends CrudController
 
     public function setupCreateOperation()
     {
-        $this->addFields();
+        $this->crud->addField([
+            'name' => 'name',
+            'label' => trans('backpack::permissionmanager.name'),
+            'type' => 'text',
+        ]);
+
+        if (config('backpack.permissionmanager.multiple_guards')) {
+            $this->crud->addField([
+                'name' => 'guard_name',
+                'label' => trans('backpack::permissionmanager.guard_type'),
+                'type' => 'select_from_array',
+                'options' => $this->getGuardTypes(),
+            ]);
+        }
+
         $this->crud->setValidation(StoreRequest::class);
 
         //otherwise, changes won't have effect
@@ -64,19 +78,14 @@ class PermissionCrudController extends CrudController
 
     public function setupUpdateOperation()
     {
-        $this->addFields();
-        $this->crud->setValidation(UpdateRequest::class);
-
-        //otherwise, changes won't have effect
-        \Cache::forget('spatie.permission.cache');
-    }
-
-    private function addFields()
-    {
         $this->crud->addField([
             'name'  => 'name',
             'label' => trans('backpack::permissionmanager.name'),
             'type'  => 'text',
+            'attributes' => $this->crud->getCurrentEntry()->hasTranslation() ? [
+                'readonly' => true,
+                'disabled' => true,
+            ] : [],
         ]);
 
         if (config('backpack.permissionmanager.multiple_guards')) {
@@ -87,6 +96,11 @@ class PermissionCrudController extends CrudController
                 'options' => $this->getGuardTypes(),
             ]);
         }
+
+        $this->crud->setValidation(UpdateRequest::class);
+
+        //otherwise, changes won't have effect
+        \Cache::forget('spatie.permission.cache');
     }
 
     /*
